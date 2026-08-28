@@ -1,0 +1,10 @@
+node_modules/
+.env
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+sessions.sqlite
+npm-debug.log
+server-test.log
+.DS_Store
