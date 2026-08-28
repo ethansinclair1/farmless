@@ -305,3 +305,11 @@ footer.site {
   padding: 60px 20px;
   color: var(--text-dim);
 }
+
+@media (max-width: 640px) {
+  header.site .wrap { flex-direction: column; gap: 10px; padding-bottom: 10px; }
+  nav.main a { margin-left: 14px; }
+  .order-meta { grid-template-columns: 1fr 1fr; }
+  .status-track { flex-wrap: wrap; }
+  .status-track .step { flex: 1 1 40%; }
+}
