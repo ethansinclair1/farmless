@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Checkout - Farmless</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="demo-banner"><strong>Demo build</strong> &mdash; "Pay" below simulates Stripe, no card details are collected or charged.</div>
+
+  <header class="site">
+    <div class="wrap">
+      <a class="brand" href="index.html">Farm<span>less</span></a>
+      <nav class="main">
+        <a href="index.html">Shop</a>
+        <a href="cart.html" id="nav-cart-link">Cart</a>
+        <span id="nav-account-slot"></span>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <h1 style="margin-top:32px">Checkout</h1>
+    <div id="checkout-body"></div>
+  </main>
+
+  <footer class="site">
+    <div class="wrap">Farmless &mdash; resources delivered to your base, no grinding required.</div>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/nav.js"></script>
+  <script>
+    function itemFor(id) { return ITEMS.find(function (i) { return i.id === id; }); }
+
+    function buildLines() {
+      const cart = Store.getCart();
+      return Object.entries(cart)
+        .filter(function (e) { return itemFor(e[0]); })
+        .map(function (e) {
+          const item = itemFor(e[0]);
+          const qty = e[1];
+          const cents = Math.round((qty / item.batch) * item.pricePer * 100);
+          return { item: item, qty: qty, cents: cents };
+        });
+    }
+
+    function render() {
+      const body = document.getElementById("checkout-body");
+      const user = Store.getUser();
+
+      if (!user) {
+        body.innerHTML = '<div class="panel"><p>Sign in to check out.</p><button type="button" class="btn" id="signin-btn">Sign in with Google</button></div>';
+        document.getElementById("signin-btn").addEventListener("click", function () {
+          fakeGoogleSignIn(function () { render(); renderNav(); });
+        });
+        return;
+      }
+
+      const lines = buildLines();
+      if (lines.length === 0) {
+        body.innerHTML = '<div class="empty-state"><p>Your cart is empty.</p><a class="btn" href="index.html">Browse resources</a></div>';
+        return;
+      }
+
+      const totalCents = lines.reduce(function (s, l) { return s + l.cents; }, 0);
+
+      let summaryRows = "";
+      lines.forEach(function (l) {
+        summaryRows += "<tr><td>" + l.item.icon + " " + l.item.name + " &times; " + fmtQty(l.qty) + "</td><td style='text-align:right'>" + money(l.cents) + "</td></tr>";
+      });
+
+      let serverOptions = "";
+      SERVERS.forEach(function (s) {
+        serverOptions += '<option value="' + s.id + '">' + s.name + "</option>";
+      });
+
+      body.innerHTML =
+        '<div class="panel"><h3 style="margin-top:0">Order summary</h3>' +
+        '<table class="lines"><tbody>' + summaryRows + "</tbody></table>" +
+        '<div class="total-row"><span>Total</span><strong>' + money(totalCents) + "</strong></div></div>" +
+        '<div class="panel"><h3 style="margin-top:0">Delivery details</h3>' +
+        '<div id="checkout-error"></div>' +
+        '<form id="checkout-form">' +
+        '<div class="field"><label for="steamUsername">Steam username</label><input type="text" id="steamUsername" placeholder="e.g. RustyMcGrath" required /></div>' +
+        '<div class="field"><label for="serverId">Server</label><select id="serverId">' + serverOptions + "</select></div>" +
+        '<div class="field"><label for="customServer">If "Other" &mdash; server name or IP</label><input type="text" id="customServer" placeholder="play.example.com:28015" /></div>' +
+        '<div class="field"><label for="baseCoords">Base coordinates</label><input type="text" id="baseCoords" placeholder="e.g. grid S14 or 1200, 800" required /><div class="hint">Open F1 console and type <code>grid</code>, or give us the map grid + a landmark.</div></div>' +
+        '<button type="submit" class="btn" id="pay-btn">Continue to payment &mdash; ' + money(totalCents) + "</button>" +
+        "</form></div>";
+
+      document.getElementById("checkout-form").addEventListener("submit", function (e) {
+        e.preventDefault();
+        const steamUsername = document.getElementById("steamUsername").value.trim();
+        const baseCoords = document.getElementById("baseCoords").value.trim();
+        const serverId = document.getElementById("serverId").value;
+        const customServer = document.getElementById("customServer").value.trim();
+
+        if (!steamUsername || !baseCoords) {
+          document.getElementById("checkout-error").innerHTML = '<div class="error-box">Fill in your Steam username and base coordinates.</div>';
+          return;
+        }
+
+        const serverMeta = SERVERS.find(function (s) { return s.id === serverId; });
+        const serverLabel = serverId === "other" ? (customServer || "Other") : serverMeta.name;
+
+        const payBtn = document.getElementById("pay-btn");
+        payBtn.disabled = true;
+        payBtn.textContent = "Processing payment...";
+
+        setTimeout(function () {
+          const order = {
+            id: "ord_" + Date.now().toString(36),
+            createdAt: new Date().toISOString(),
+            steamUsername: steamUsername,
+            baseCoords: baseCoords,
+            serverLabel: serverLabel,
+            totalCents: totalCents,
+            items: lines.map(function (l) { return { name: l.item.name, icon: l.item.icon, qty: l.qty, cents: l.cents }; }),
+            status: "paid",
+            messages: [
+              { sender: "staff", author: "Farmless Team", body: "Got your order! We'll queue it up and drop it at your base shortly.", at: new Date().toISOString() }
+            ]
+          };
+          Store.addOrder(order);
+          Store.setCart({});
+          window.location.href = "order.html?id=" + order.id + "&justPaid=1";
+        }, 900);
+      });
+    }
+
+    render();
+  </script>
+</body>
+</html>

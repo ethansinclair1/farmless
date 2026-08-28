@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Order - Farmless</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="demo-banner"><strong>Demo build</strong> &mdash; this order and its messages live only in this browser.</div>
+
+  <header class="site">
+    <div class="wrap">
+      <a class="brand" href="index.html">Farm<span>less</span></a>
+      <nav class="main">
+        <a href="index.html">Shop</a>
+        <a href="cart.html" id="nav-cart-link">Cart</a>
+        <span id="nav-account-slot"></span>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap" id="order-body">
+    <h1 style="margin-top:32px">Loading order...</h1>
+  </main>
+
+  <footer class="site">
+    <div class="wrap">Farmless &mdash; resources delivered to your base, no grinding required.</div>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/nav.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const orderId = params.get("id");
+    const container = document.getElementById("order-body");
+
+    function statusTrackHtml(status) {
+      const idx = STATUS_STEPS.indexOf(status);
+      return STATUS_STEPS.map(function (step, i) {
+        const cls = i < idx ? "done" : (i === idx ? "current" : "");
+        return '<div class="step ' + cls + '">' + step.replace("_", " ") + "</div>";
+      }).join("");
+    }
+
+    function messagesHtml(order) {
+      return (order.messages || []).map(function (m) {
+        const who = m.sender === "staff" ? "Staff" : (m.author || "You");
+        return '<div class="msg ' + m.sender + '"><div class="who">' + who + " &middot; " + new Date(m.at).toLocaleString() + "</div><div>" + m.body + "</div></div>";
+      }).join("");
+    }
+
+    function render() {
+      const order = Store.getOrder(orderId);
+      if (!order) {
+        container.innerHTML = '<div class="empty-state"><p>Order not found in this browser.</p><a class="btn" href="orders.html">Back to orders</a></div>';
+        return;
+      }
+
+      const itemRows = order.items.map(function (i) {
+        return "<tr><td>" + i.icon + " " + i.name + " &times; " + fmtQty(i.qty) + "</td><td style='text-align:right'>" + money(i.cents) + "</td></tr>";
+      }).join("");
+
+      const nextIdx = STATUS_STEPS.indexOf(order.status) + 1;
+      const advanceBtn = nextIdx < STATUS_STEPS.length
+        ? '<button type="button" class="btn small" id="advance-btn">Simulate: mark as "' + STATUS_STEPS[nextIdx].replace("_", " ") + '" (demo staff action)</button>'
+        : '<span class="hint">Order fully delivered.</span>';
+
+      container.innerHTML =
+        '<h1 style="margin-top:32px">Order #' + order.id.slice(4) + "</h1>" +
+        '<div class="status-track">' + statusTrackHtml(order.status) + "</div>" +
+        '<div class="order-meta">' +
+        '<div><div class="label">Steam username</div><div class="value">' + order.steamUsername + "</div></div>" +
+        '<div><div class="label">Server</div><div class="value">' + order.serverLabel + "</div></div>" +
+        '<div><div class="label">Base coordinates</div><div class="value">' + order.baseCoords + "</div></div>" +
+        '<div><div class="label">Total</div><div class="value">' + money(order.totalCents) + "</div></div>" +
+        "</div>" +
+        '<div class="panel"><h3 style="margin-top:0">Items</h3><table class="lines"><tbody>' + itemRows + "</tbody></table>" +
+        '<div style="margin-top:14px">' + advanceBtn + "</div></div>" +
+        '<div class="panel"><h3 style="margin-top:0">Messages</h3>' +
+        '<div class="thread" id="thread">' + messagesHtml(order) + "</div>" +
+        '<form class="msg-form" id="msg-form"><textarea id="msg-body" placeholder="Send a message..." required></textarea><button type="submit" class="btn">Send</button></form>' +
+        "</div>";
+
+      const advance = document.getElementById("advance-btn");
+      if (advance) {
+        advance.addEventListener("click", function () {
+          Store.updateOrder(order.id, { status: STATUS_STEPS[nextIdx] });
+          render();
+        });
+      }
+
+      const thread = document.getElementById("thread");
+      thread.scrollTop = thread.scrollHeight;
+
+      document.getElementById("msg-form").addEventListener("submit", function (e) {
+        e.preventDefault();
+        const textarea = document.getElementById("msg-body");
+        const body = textarea.value.trim();
+        if (!body) return;
+        const user = Store.getUser();
+        Store.addMessage(order.id, { sender: "customer", author: user ? user.name : "You", body: body, at: new Date().toISOString() });
+        textarea.value = "";
+        render();
+
+        setTimeout(function () {
+          Store.addMessage(order.id, {
+            sender: "staff",
+            author: "Farmless Team",
+            body: "Thanks, got it - we'll take a look and get back to you shortly.",
+            at: new Date().toISOString()
+          });
+          render();
+        }, 1200);
+      });
+    }
+
+    render();
+  </script>
+</body>
+</html>

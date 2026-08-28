@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Orders - Farmless</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="demo-banner"><strong>Demo build</strong> &mdash; orders are stored only in this browser.</div>
+
+  <header class="site">
+    <div class="wrap">
+      <a class="brand" href="index.html">Farm<span>less</span></a>
+      <nav class="main">
+        <a href="index.html">Shop</a>
+        <a href="cart.html" id="nav-cart-link">Cart</a>
+        <span id="nav-account-slot"></span>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <h1 style="margin-top:32px">My orders</h1>
+    <div id="orders-body"></div>
+  </main>
+
+  <footer class="site">
+    <div class="wrap">Farmless &mdash; resources delivered to your base, no grinding required.</div>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/nav.js"></script>
+  <script>
+    const body = document.getElementById("orders-body");
+    const orders = Store.getOrders();
+
+    if (orders.length === 0) {
+      body.innerHTML = '<div class="empty-state"><p>No orders yet.</p><a class="btn" href="index.html">Start shopping</a></div>';
+    } else {
+      let rows = "";
+      orders.forEach(function (o) {
+        rows +=
+          "<tr><td>#" + o.id.slice(4) + "</td><td>" + o.serverLabel + "</td><td>" + money(o.totalCents) + '</td><td><span class="badge ' + o.status + '">' + o.status.replace("_", " ") + "</span></td>" +
+          '<td><a href="order.html?id=' + o.id + '" class="btn secondary small">View</a></td></tr>';
+      });
+      body.innerHTML =
+        '<table class="lines" style="margin-bottom:60px"><thead><tr><th>Order</th><th>Server</th><th>Total</th><th>Status</th><th></th></tr></thead><tbody>' + rows + "</tbody></table>";
+    }
+  </script>
+</body>
+</html>
