@@ -36,6 +36,19 @@ The app runs on `http://localhost:3000` and creates a local SQLite database (`fa
 
 Items and prices live in [`data/items.js`](data/items.js). Servers customers can pick at checkout live in [`data/servers.js`](data/servers.js) - update that list with your actual server names.
 
+## Deploying
+
+This needs an actual Node host, not static hosting like GitHub Pages - there's no server behind Pages, so login/payments/orders can't work there.
+
+Easiest path is Render, using the `render.yaml` already in this repo:
+
+1. Push this repo to your own GitHub account (or fork it)
+2. On [render.com](https://render.com), New -> Blueprint, point it at the repo - it reads `render.yaml` and creates the web service automatically
+3. Fill in the env vars it asks for (Google OAuth, Stripe, `ADMIN_EMAILS`, `BASE_URL` = your Render URL)
+4. Update the Google OAuth client's authorized redirect URI and the Stripe webhook URL to point at that same Render URL
+
+Note: the free Render plan has an ephemeral disk, so the SQLite file resets on redeploys/restarts. Fine for testing; move to a paid plan with a persistent disk (or swap SQLite for a managed Postgres add-on) before you rely on it for real orders.
+
 ## Notes
 
 - Order delivery itself (spawning items in-game) is manual: staff mark orders as delivered from `/admin` after dropping the stack in-game. Wiring this up to RCON is a natural next step.
