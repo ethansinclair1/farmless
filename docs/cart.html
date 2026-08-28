@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cart - Farmless</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="demo-banner"><strong>Demo build</strong> &mdash; runs entirely in your browser, nothing real is charged.</div>
+
+  <header class="site">
+    <div class="wrap">
+      <a class="brand" href="index.html">Farm<span>less</span></a>
+      <nav class="main">
+        <a href="index.html">Shop</a>
+        <a href="cart.html" id="nav-cart-link">Cart</a>
+        <span id="nav-account-slot"></span>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <h1 style="margin-top:32px">Your cart</h1>
+    <div id="cart-body"></div>
+  </main>
+
+  <footer class="site">
+    <div class="wrap">Farmless &mdash; resources delivered to your base, no grinding required.</div>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/nav.js"></script>
+  <script>
+    function itemFor(id) { return ITEMS.find(function (i) { return i.id === id; }); }
+
+    function render() {
+      const cart = Store.getCart();
+      const entries = Object.entries(cart).filter(function (e) { return itemFor(e[0]); });
+      const body = document.getElementById("cart-body");
+
+      if (entries.length === 0) {
+        body.innerHTML = '<div class="empty-state"><p>Nothing in your cart yet.</p><a class="btn" href="index.html">Browse resources</a></div>';
+        return;
+      }
+
+      let totalCents = 0;
+      let rows = "";
+      entries.forEach(function (e) {
+        const item = itemFor(e[0]);
+        const qty = e[1];
+        const cents = Math.round((qty / item.batch) * item.pricePer * 100);
+        totalCents += cents;
+        rows +=
+          "<tr><td>" + item.icon + " " + item.name + "</td><td>" + fmtQty(qty) + "</td><td>" + money(cents) + '</td><td><button type="button" class="btn secondary small remove-btn" data-id="' + item.id + '">Remove</button></td></tr>';
+      });
+
+      body.innerHTML =
+        '<table class="lines"><thead><tr><th>Item</th><th>Quantity</th><th>Price</th><th></th></tr></thead><tbody>' + rows + "</tbody></table>" +
+        '<div class="total-row"><span>Total</span><strong>' + money(totalCents) + "</strong></div>" +
+        '<div style="display:flex; gap:12px; padding-bottom:60px">' +
+        '<a href="index.html" class="btn secondary">Keep shopping</a>' +
+        '<a href="checkout.html" class="btn">Checkout</a>' +
+        "</div>";
+
+      body.querySelectorAll(".remove-btn").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          const cart = Store.getCart();
+          delete cart[btn.dataset.id];
+          Store.setCart(cart);
+          renderNav();
+          render();
+        });
+      });
+    }
+
+    render();
+  </script>
+</body>
+</html>

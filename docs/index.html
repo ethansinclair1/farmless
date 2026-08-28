@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Farmless</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="demo-banner">
+    <strong>Demo build</strong> &mdash; runs entirely in your browser. Sign-in and payment are simulated, nothing real is charged. The full version with real Google login and Stripe checkout is in the repo.
+  </div>
+
+  <header class="site">
+    <div class="wrap">
+      <a class="brand" href="index.html">Farm<span>less</span></a>
+      <nav class="main">
+        <a href="index.html">Shop</a>
+        <a href="cart.html" id="nav-cart-link">Cart</a>
+        <span id="nav-account-slot"></span>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="hero">
+      <h1>Skip the grind. Get stacked.</h1>
+      <p>Pick your resources, set the amount, and we'll drop them at your base. Pay once, we handle the rest.</p>
+    </section>
+
+    <div class="grid" id="item-grid"></div>
+  </main>
+
+  <footer class="site">
+    <div class="wrap">Farmless &mdash; resources delivered to your base, no grinding required.</div>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/nav.js"></script>
+  <script>
+    const grid = document.getElementById("item-grid");
+
+    ITEMS.forEach(function (item) {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML =
+        '<div class="icon">' + item.icon + "</div>" +
+        "<h3>" + item.name + "</h3>" +
+        '<div class="blurb">' + item.blurb + "</div>" +
+        '<div class="qty-row">' +
+        '<button type="button" class="step minus">-</button>' +
+        '<input type="number" class="qty-input" value="' + item.min + '" min="' + item.min + '" max="' + item.max + '" step="' + item.batch + '" />' +
+        '<button type="button" class="step plus">+</button>' +
+        "</div>" +
+        '<div class="price-line"><span>Total</span><span class="price">$<span class="price-value">' + item.pricePer.toFixed(2) + "</span></span></div>" +
+        '<button type="button" class="btn add-btn">Add to cart</button>';
+
+      const input = card.querySelector(".qty-input");
+      const priceValue = card.querySelector(".price-value");
+
+      function clamp(val) {
+        val = Math.round(val / item.batch) * item.batch;
+        return Math.max(item.min, Math.min(item.max, val));
+      }
+      function refresh() {
+        const qty = clamp(parseInt(input.value, 10) || item.min);
+        input.value = qty;
+        priceValue.textContent = ((qty / item.batch) * item.pricePer).toFixed(2);
+      }
+
+      card.querySelector(".minus").addEventListener("click", function () {
+        input.value = clamp((parseInt(input.value, 10) || item.min) - item.batch);
+        refresh();
+      });
+      card.querySelector(".plus").addEventListener("click", function () {
+        input.value = clamp((parseInt(input.value, 10) || item.min) + item.batch);
+        refresh();
+      });
+      input.addEventListener("change", refresh);
+
+      card.querySelector(".add-btn").addEventListener("click", function () {
+        const qty = clamp(parseInt(input.value, 10) || item.min);
+        const cart = Store.getCart();
+        cart[item.id] = qty;
+        Store.setCart(cart);
+        renderNav();
+        const btn = card.querySelector(".add-btn");
+        const original = btn.textContent;
+        btn.textContent = "Added!";
+        setTimeout(function () { btn.textContent = original; }, 900);
+      });
+
+      refresh();
+      grid.appendChild(card);
+    });
+  </script>
+</body>
+</html>
