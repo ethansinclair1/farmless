@@ -1,0 +1,43 @@
+<%- include('partials/header') %>
+
+<h1 style="margin-top:32px">Your cart</h1>
+
+<% if (lines.length === 0) { %>
+  <div class="empty-state">
+    <p>Nothing in your cart yet.</p>
+    <a class="btn" href="/">Browse resources</a>
+  </div>
+<% } else { %>
+  <table class="lines">
+    <thead>
+      <tr><th>Item</th><th>Quantity</th><th>Price</th><th></th></tr>
+    </thead>
+    <tbody>
+      <% lines.forEach(function(l) { %>
+        <tr>
+          <td><%= l.item.icon %> <%= l.item.name %></td>
+          <td><%= l.quantity.toLocaleString() %></td>
+          <td>$<%= (l.cents / 100).toFixed(2) %></td>
+          <td>
+            <form method="POST" action="/cart/remove">
+              <input type="hidden" name="itemId" value="<%= l.item.id %>" />
+              <button type="submit" class="btn secondary small">Remove</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+
+  <div class="total-row">
+    <span>Total</span>
+    <strong>$<%= (totalCents / 100).toFixed(2) %></strong>
+  </div>
+
+  <div style="display:flex; gap:12px; padding-bottom:60px">
+    <a href="/" class="btn secondary">Keep shopping</a>
+    <a href="/checkout" class="btn">Checkout</a>
+  </div>
+<% } %>
+
+<%- include('partials/footer') %>

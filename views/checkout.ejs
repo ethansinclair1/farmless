@@ -1,0 +1,54 @@
+<%- include('partials/header') %>
+
+<h1 style="margin-top:32px">Checkout</h1>
+
+<% if (error) { %><div class="error-box"><%= error %></div><% } %>
+
+<div class="panel">
+  <h3 style="margin-top:0">Order summary</h3>
+  <table class="lines">
+    <tbody>
+      <% lines.forEach(function(l) { %>
+        <tr>
+          <td><%= l.item.icon %> <%= l.item.name %> &times; <%= l.quantity.toLocaleString() %></td>
+          <td style="text-align:right">$<%= (l.cents / 100).toFixed(2) %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  <div class="total-row"><span>Total</span><strong>$<%= (totalCents / 100).toFixed(2) %></strong></div>
+</div>
+
+<div class="panel">
+  <h3 style="margin-top:0">Delivery details</h3>
+  <form method="POST" action="/checkout">
+    <div class="field">
+      <label for="steamUsername">Steam username</label>
+      <input type="text" id="steamUsername" name="steamUsername" placeholder="e.g. RustyMcGrath" required />
+    </div>
+
+    <div class="field">
+      <label for="serverId">Server</label>
+      <select id="serverId" name="serverId" required>
+        <% servers.forEach(function(s) { %>
+          <option value="<%= s.id %>"><%= s.name %></option>
+        <% }) %>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="customServer">If "Other" &mdash; server name or IP</label>
+      <input type="text" id="customServer" name="customServer" placeholder="play.example.com:28015" />
+    </div>
+
+    <div class="field">
+      <label for="baseCoords">Base coordinates</label>
+      <input type="text" id="baseCoords" name="baseCoords" placeholder="e.g. grid S14 or 1200, 800" required />
+      <div class="hint">Open F1 console and type <code>grid</code>, or give us the in-game map grid + a landmark.</div>
+    </div>
+
+    <button type="submit" class="btn">Continue to payment &mdash; $<%= (totalCents / 100).toFixed(2) %></button>
+  </form>
+</div>
+
+<%- include('partials/footer') %>

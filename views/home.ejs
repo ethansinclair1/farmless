@@ -1,0 +1,36 @@
+<%- include('partials/header') %>
+
+<section class="hero">
+  <h1>Skip the grind. Get stacked.</h1>
+  <p>Pick your resources, set the amount, and we'll drop them at your base. Pay once, we handle the rest.</p>
+</section>
+
+<div class="grid">
+  <% items.forEach(function(item) { %>
+    <div class="card" data-batch="<%= item.batch %>" data-price="<%= item.pricePer %>" data-min="<%= item.min %>" data-max="<%= item.max %>">
+      <div class="icon"><%= item.icon %></div>
+      <h3><%= item.name %></h3>
+      <div class="blurb"><%= item.blurb %></div>
+
+      <div class="qty-row">
+        <button type="button" class="step minus">-</button>
+        <input type="number" class="qty-input" value="<%= item.min %>" min="<%= item.min %>" max="<%= item.max %>" step="<%= item.batch %>" />
+        <button type="button" class="step plus">+</button>
+      </div>
+
+      <div class="price-line">
+        <span>Total</span>
+        <span class="price">$<span class="price-value"><%= item.pricePer.toFixed(2) %></span></span>
+      </div>
+
+      <form method="POST" action="/cart/add">
+        <input type="hidden" name="itemId" value="<%= item.id %>" />
+        <input type="hidden" class="qty-hidden" name="quantity" value="<%= item.min %>" />
+        <button type="submit" class="btn">Add to cart</button>
+      </form>
+    </div>
+  <% }) %>
+</div>
+
+<script src="/js/shop.js"></script>
+<%- include('partials/footer') %>

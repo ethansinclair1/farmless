@@ -1,0 +1,64 @@
+<%- include('partials/header') %>
+
+<h1 style="margin-top:32px">Order #<%= order.id %></h1>
+
+<div class="status-track">
+  <% STATUS_STEPS.forEach(function(step, i) { %>
+    <% const currentIdx = STATUS_STEPS.indexOf(order.status); %>
+    <div class="step <%= i < currentIdx ? 'done' : (i === currentIdx ? 'current' : '') %>">
+      <%= step.replace('_', ' ') %>
+    </div>
+  <% }) %>
+</div>
+
+<div class="order-meta">
+  <div><div class="label">Steam username</div><div class="value"><%= order.steam_username %></div></div>
+  <div><div class="label">Server</div><div class="value"><%= order.server_label %></div></div>
+  <div><div class="label">Base coordinates</div><div class="value"><%= order.base_coords %></div></div>
+  <div><div class="label">Total</div><div class="value">$<%= (order.total_cents / 100).toFixed(2) %></div></div>
+</div>
+
+<div class="panel">
+  <h3 style="margin-top:0">Items</h3>
+  <table class="lines">
+    <tbody>
+      <% order.items.forEach(function(i) { %>
+        <tr>
+          <td><%= i.item_name %> &times; <%= i.quantity.toLocaleString() %></td>
+          <td style="text-align:right">$<%= (i.price_cents / 100).toFixed(2) %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+
+  <% if (admin) { %>
+    <form method="POST" action="/admin/<%= order.id %>/status" style="margin-top:14px; display:flex; gap:8px; align-items:center">
+      <label for="status" style="font-weight:600; font-size:0.9rem">Update status:</label>
+      <select name="status" id="status">
+        <% STATUS_STEPS.forEach(function(s) { %>
+          <option value="<%= s %>" <%= s === order.status ? 'selected' : '' %>><%= s.replace('_',' ') %></option>
+        <% }) %>
+      </select>
+      <button type="submit" class="btn small">Update</button>
+    </form>
+  <% } %>
+</div>
+
+<div class="panel">
+  <h3 style="margin-top:0">Messages</h3>
+  <div class="thread" data-order-id="<%= order.id %>">
+    <% order.messages.forEach(function(m) { %>
+      <div class="msg <%= m.sender %>">
+        <div class="who"><%= m.sender === 'staff' ? 'Staff' : (m.author_name || 'You') %> &middot; <%= new Date(m.created_at).toLocaleString() %></div>
+        <div><%= m.body %></div>
+      </div>
+    <% }) %>
+  </div>
+  <form method="POST" action="/orders/<%= order.id %>/messages" class="msg-form">
+    <textarea name="body" placeholder="Send a message..." required></textarea>
+    <button type="submit" class="btn">Send</button>
+  </form>
+</div>
+
+<script src="/js/shop.js"></script>
+<%- include('partials/footer') %>
