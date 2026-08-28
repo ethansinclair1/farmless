@@ -2,6 +2,8 @@
 
 Buy Rust resources and have them delivered straight to your base. Sign in with Google, pick your stacks (wood, stone, metal, scrap, HQM, and more), pay through Stripe, then track delivery and message the team from your order page.
 
+**[Live demo](https://ethansinclair1.github.io/farmless/)** - click-through version with fake sign-in and fake payment (everything's stored in your browser, nothing real happens). Good for seeing the flow. The real app with actual Google login, Stripe, and a database lives in the root of this repo - see [Deploying](#deploying) below to run that one for real.
+
 ## Features
 
 - Google sign-in (Passport + OAuth2)
